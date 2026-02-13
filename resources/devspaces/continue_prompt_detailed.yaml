@@ -1,0 +1,38 @@
+name: Code Refactoring
+version: 0.0.1
+schema: v1
+prompts:
+  - name: Generate Python 2 to Python 3 Spec (detailed)
+    description: Generates a specification for the given Python codebase (detailed)
+    prompt: |
+      Your task is to analyze this code and generate a software design document.
+      This document should include a concise explanation of the purpose of the code.
+      If the provided snippet does not appear to be valid code, indicate that this is not valid code.
+      Stop after you have finished writing the 3 sections described below.
+      Do not stray from the functionality provided in the codebase. Stick strictly to the code provided.
+
+
+      Your analysis must include the following sections:
+
+      **1. Summary:** 
+      * Provide a clear and concise explanation of the purpose of the code.
+
+      **2. Components:** 
+      * Provide a concise list of all the important Python relevant components you can find. 
+      * Do not rename any components or change their case; provide them exactly as they are shown in the code.
+      * Include the following:
+          * List of imports and their responsibilities: include the file path to the import statements if it is available
+          * List of functions and methods and their responsibilitites: include the file path to the functions if available
+          * List of classes and their responsibilities: include the file path to the classes if it is available
+          * List of global variables and constants and their responsibilities: include the file path to the variables and constants 
+      if available
+          * List of local variables and constants and their responsibilities: include the file path to the variables and constants 
+      if available
+          * List of the names of external dependencies and their 
+      responsibilities (if any): file I/O operations, database connections, network operations, system calls;include the file path to 
+      the 
+      templates if it is available
+          
+      **3. Domain:** 
+      * Generate a concise outline of the domain model associated with this code.
+      * Include the current state of the domain objects based on information extracted from the code.

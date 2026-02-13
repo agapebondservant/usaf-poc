@@ -1,0 +1,9 @@
+name: Code Refactoring
+version: 0.0.1
+schema: v1
+prompts:
+  - name: Generate ColdFusion 6 to NodeJS/React Spec (experimental)
+    description: Generates a specification for the given ColdFusion codebase
+    prompt: |
+      You are an expert software architect specializing in legacy modernization. I need help migrating a ColdFusion application to a modern stack using Node.js (backend) and React (frontend).
+      Using the context provided above, please generate a software requirements specification  for this codebase. 

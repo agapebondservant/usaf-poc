@@ -1,0 +1,57 @@
+name: Continue Config
+version: 1.0.0
+models:
+  - name: granite
+    provider: openai
+    apiBase: https://granite-4-tiny-demo.apps.cluster-7zchm.7zchm.sandbox286.opentlc.com/v1/
+    model: granite-4-tiny
+    apiKey: eyJhbGciOiJSUzI1NiIsImtpZCI6IldBSHNvNzU4YjhKZ0gxMG00MnpDaG92V0dSZzRJQXV1WGRRUmRtSmtTU00ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZW1vIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlZmF1bHQtbmFtZS1ncmFuaXRlLTQtdGlueS1zYSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJncmFuaXRlLTQtdGlueS1zYSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjM5MzVjYzI1LWVjZTQtNDM4YS1hMDQxLTU0NGZhYTI0MzhiOCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZW1vOmdyYW5pdGUtNC10aW55LXNhIn0.r15WlpknBbWIuNL8v5UPOcEal0MCp5Z7Ro4YxZDPPoqV4K4yvnG_4TIFsAnKkg3c_Xw9LTMNiPUDrkgRblUNLIHMw_Jfw4JcrKD-Q47G6ly8T5W-DMyVe1xoRl0q-giqipRZa1pdWPpJ7fabWc2DN2v9RbY-HYLFj4frxL0ki_ugUpGQJPaEmlmDYgyNZEjpeYKA0K5Esq9QfPAGR-8kcW4hyAKIBxDWR4XQr84qyK4v_QbNHGy86L-f4v-gSZum272yHlB-hoWeySn3bHSSF38Q1LgBTWp3w4d6_N1UKVDusYWEl_AMnFftLwRSKs-en8XzIl2G7OHag8FeamnVBhBJrkVBlDHc0tI-pW4uTmAL3BBReugc4ihCaFhTeSAlt-hjen4f8dfHPJe7FNmissYAwO8s1VFndTC-FPbxNEXTZl20kBP3OlYVnmFpHEeW-b9Nmk-8BSsh7z0pvpd-YE56FgkYuEb6-guPBiwtYhL0WhfPfewk7-OcV_08xWImqyMVtqPYokLCapKbDq0RhlAAWemSkKW5Lq-WkHeTsjgVSNrP1KbuIOBugmy3TeqOdmN8dbVq0OD72JSjea2CJU8JNUPKnIh91lZ-oXNdG_-OowNfE28D7kfWIUKcd6pe4iSpm4gJjSFuUw_BcpLMAK-j-zVepnsQ-_qDQQffoQo
+    roles:
+      - chat
+      - edit
+      - apply
+      - autocomplete
+      - summarize
+    capabilities:
+      - tool_use
+  - name: gpt-oss-20b
+    provider: openai
+    apiBase: https://openrouter.ai/api/v1
+    model: openai/gpt-oss-20b
+    apiKey: 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
+    roles:
+      - chat
+      - edit
+      - apply
+      - autocomplete
+      - summarize
+    capabilities:
+      - tool_use
+  - name: mistral
+    provider: openai
+    apiBase: https://openrouter.ai/api/v1
+    model: mistralai/codestral-2508
+    apiKey: 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
+    roles:
+      - chat
+      - edit
+      - apply
+      - autocomplete
+      - summarize
+    capabilities:
+      - tool_use
+context:
+  - uses: continuedev/code-context
+    with: {}
+  - uses: continuedev/docs-context
+    with: {}
+  - uses: continuedev/diff-context
+    with: {}
+  - uses: continuedev/terminal-context
+    with: {}
+  - uses: continuedev/problems-context
+    with: {}
+  - uses: continuedev/folder-context
+    with: {}
+  - uses: continuedev/codebase-context
+    with: {}
