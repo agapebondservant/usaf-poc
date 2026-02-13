@@ -2,31 +2,31 @@
 
 Contents
 ---
-- Prepare environment variables
-- Set up 
-  - Pre-requisites
-  - Set up Cluster Monitoring
-  - Deploy Dev Spaces
-  - Set up continue.dev
-  - Set up custom workbenches
-  - Set up custom ServingRuntime
-  - Deploy Granite 4 Tiny with Tool Calling
-  - Deploy E5-mistral-7b-instruct for GraphRAG embedding
-  - Set up Minio for Object Storage (for **LanceDB with GraphRAG**, **Kubeflow Pipeline Server**)
-  - Set up Kubeflow Pipelines
-  - Set up LanceDB MCP Server
-  - Set up Llama Stack
-- Run Synthetic Data Generation with sdg_hub
-- Run GraphRAG Index Generation with Microsoft GraphRAG
-- Run Code Evaluation with DeepEval
-- Setup GraphRAG with LanceDB
-- Demonstration
-  - Demonstration with Kubeflow Pipelines
-  - Demonstration with Llama Stack Playground
-  - Demonstration with continue.dev
-  - Demonstration with n8n
-  - Demonstration with multi-agentic app
-- How-Tos
+- [ ] Prepare environment variables
+- [ ] Set up 
+  - [ ] Pre-requisites
+  - [ ] Set up Cluster Monitoring
+  - [ ] Deploy Dev Spaces
+  - [ ] Set up continue.dev
+  - [ ] Set up custom workbenches
+  - [ ] Set up custom ServingRuntime
+  - [ ] Deploy Granite 4 Tiny with Tool Calling
+  - [ ] Deploy E5-mistral-7b-instruct for GraphRAG embedding
+  - [ ] Set up Minio for Object Storage (for **LanceDB with GraphRAG**, **Kubeflow Pipeline Server**)
+  - [ ] Set up Kubeflow Pipelines
+  - [ ] Set up LanceDB MCP Server
+  - [ ] Set up Llama Stack
+- [ ] Run Synthetic Data Generation with sdg_hub
+- [ ] Run GraphRAG Index Generation with Microsoft GraphRAG
+- [ ] Run Code Evaluation with DeepEval
+- [ ] Setup GraphRAG with LanceDB
+- [ ] Demonstration
+  - [ ] Demonstration with Kubeflow Pipelines
+  - [ ] Demonstration with Llama Stack Playground
+  - [ ] Demonstration with continue.dev
+  - [ ] Demonstration with n8n
+  - [ ] Demonstration with multi-agentic app
+- [ ] How-Tos
 
 ## 0. PREPARE ENVIRONMENT VARIABLES
 Update .env.template as appropriate and rename to .env, then run
