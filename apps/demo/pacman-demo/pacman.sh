@@ -11,12 +11,14 @@ EOF
 
 podman build -t pacman-game .
 
-echo "Enter the difficulty level (1 = low, 2 = medium, 3 = high):"
+echo "
+
+Enter the difficulty level (1 = low, 2 = medium, 3 = high):"
 
 read difficulty
 
-echo "INSTRUCTIONS: To play the game, hit ENTER, then use the following keys
- to navigate:
+echo "INSTRUCTIONS: You are Player 'P'. To start the game, hit ENTER, then
+use the following keys to navigate:
  w = UP
  a = LEFT
  s = DOWN
