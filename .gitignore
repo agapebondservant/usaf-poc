@@ -1,11 +1,9 @@
 .env
 apps/cf_golfap
 apps/Checkmate-CMS
-apps/demo
-apps/HelloWorld
-apps/shopping-cart
-apps/demo.sh
-apps/demo.sql
+apps/demo/cherrypy
+apps/demo/pacman-game
+apps/demo/phony
 apps/README.md
 scratch/
 old/
@@ -23,3 +21,4 @@ pipelines/data_generator_graphrag.py
 pipelines/data_generator_sdghub.py
 pipelines/utils.py
 apps/pacman-game
+apps/demo/*.txt

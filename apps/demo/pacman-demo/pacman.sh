@@ -9,10 +9,18 @@ cat << "EOF"
                 \/     \/      \/     \/     \/          \/     \/      \/     \/
 EOF
 
+podman build -t pacman-game .
+
 echo "Enter the difficulty level (1 = low, 2 = medium, 3 = high):"
 
 read difficulty
 
-podman build -t pacman-game .
+echo "INSTRUCTIONS: To play the game, hit ENTER, then use the following keys
+ to navigate:
+ w = UP
+ a = LEFT
+ s = DOWN
+ d = RIGHT
+ q = QUIT"
 
-podman run -it pacman-game --difficulty $difficulty --size-x 40 --size-y 40
+podman run -it pacman-game --difficulty $difficulty --size-x 20 --size-y 20
