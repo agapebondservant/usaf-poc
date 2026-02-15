@@ -1,4 +1,5 @@
 .env
+**/.env
 apps/cf_golfap
 apps/Checkmate-CMS
 apps/demo/cherrypy
@@ -22,3 +23,5 @@ pipelines/data_generator_sdghub.py
 pipelines/utils.py
 apps/pacman-game
 apps/demo/*.txt
+resources/devspaces/devspaces_secret.yaml
+resources/devspaces/devfile.yaml

@@ -20,6 +20,7 @@ Contents
 - [ ] Run GraphRAG Index Generation with Microsoft GraphRAG
 - [ ] Run Code Evaluation with DeepEval
 - [ ] Setup GraphRAG with LanceDB
+- [ ] Setup Agentic Workflows
 - [ ] Demonstration
   - [ ] Demonstration with Kubeflow Pipelines
   - [ ] Demonstration with Llama Stack Playground
@@ -33,6 +34,9 @@ Update .env.template as appropriate and rename to .env, then run
 ```
 source .env
 ```
+
+You may need to acquire the following credentials:
+- CODEAGENT_GITHUB_PAT: Github Personal Access Token (access from https://github.com/settings/tokens; select Classic Token -> repo scope)
 
 ## 1. SET UP
 
@@ -55,14 +59,22 @@ Run the following script:
 ### 1.1 Deploy Dev Spaces(use <a href="https://github.com/settings/applications/new" target="_blank">DevSpaces documentation</a>)
 Run the following script:
 ```
+set -a
 source .env
-export DEVSPACES_CLIENT_ID=$DEVSPACES_CLIENT_ID
-export DEVSPACES_CLIENT_SECRET=$DEVSPACES_CLIENT_SECRET
-oc create namespace openshift-devspaces
-envsubst < resources/templates/devspacessecret.yaml.in > resources/devspaces/secret.yaml
-oc apply -f resources/devspaces/secret.yaml
+export DEVSPACES_GIT_TOKEN_BASE64 = $(echo -n "${CODEAGENT_GITHUB_PAT}" | base64)
+set +a
+envsubst < templates/devfile.yaml.in > resources/devspaces/devfile.yaml
+envsubst < templates/devspaces_secret.yaml.in > resources/devspaces/devspaces_secret.yaml
+envsubst < templates/devspaces_configmap.yaml.in > resources/devspaces/devspaces_configmap.yaml
+oc apply -f resources/devspaces/devspaces_configmap.yaml
+oc apply -f resources/devspaces/devspaces_secret.yaml
 ```
-Then install Dev Spaces: https://docs.redhat.com/en/documentation/red_hat_openshift_dev_spaces/3.24
+
+Copy `resources/devspaces/devfile.yaml` to the root of the github 
+repository that will be loaded in DevSpaces.
+
+Install Dev Spaces: https://docs.redhat.com/en/documentation/red_hat_openshift_dev_spaces/3.24
+
 
 ### 1.2. Set up continue.dev
 
@@ -233,11 +245,14 @@ Run notebook: [notebooks/code_evaluator.ipynb](codeevaluator)
 ## 5. Setup GraphRAG with LanceDB
 See Jupyter Notebook: [notebooks/data_evaluator_graphrag.ipynb](graphrag)
 
-## 6. Demonstration
-### 6.1 Demonstration with Llama Stack Playground
+## 6. Setup Agentic Workflows
+See checklist: <a href="https://docs.google.com/spreadsheets/d/1JIFMWys9qbbKzrjLotpttTo7lH8tm-t_ebkvWKVJ_SY/edit?usp=sharing" target="_blank">Agentic Workflows Checklist</a>
 
-## 6.2 Demonstration with continue.dev
-## 6.3 Running the Python app
+## 7. Demonstration
+### 7.1 Demonstration with Llama Stack Playground
+
+## 7.2 Demonstration with continue.dev
+## 7.3 Running the Python app
 
 Shopping cart:
 ```
@@ -257,9 +272,9 @@ cd apps/cf_golfap
 podman run -d -p 8080:8080 -p 8443:8443 -v $(pwd):/app --name cf_golfap ortussolutions/commandbox
 ```
 
-### 4.3. Demonstration with n8n
+### 7.4. Demonstration with n8n
 
-### 4.4. Demonstration with multi-agentic app
+### 7.5. Demonstration with multi-agentic app
 To run the app locally:
   1. Set up a virtual environment: python3.12 -m venv venv 
   2. Activate the virtual environment: source venv/bin/activate
@@ -269,9 +284,9 @@ To run the app locally:
   6. Install dependencies: pip install -r requirements.txt 
   7. Start the app: python3 -m streamlit run app.py
 
-### 4.5. Demonstration with Kubeflow Pipelines
+### 7.6. Demonstration with Kubeflow Pipelines
 
-## 5. How-Tos (can convert to MCP servers)
+## 7.7. How-Tos (can convert to MCP servers)
 
 ### Get Size of LanceDB index
 Run the following:
