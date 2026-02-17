@@ -1,0 +1,19 @@
+Generate a deterministic Python migration controller script.
+
+Requirements:
+- Run 2to3 once.
+- Process files incrementally.
+- Run ruff, mypy, pytest after each file.
+- Stop on first failure.
+- Do not modify tests.
+- Do not delete failing modules.
+- Persist state for resume.
+- Commit per file.
+- Include dry-run mode.
+- Include verbose logging.
+- Produce final migration report.
+
+Constraints:
+- Do not execute anything.
+- Output only one production-ready Python script.
+- No placeholders.

@@ -276,7 +276,7 @@ podman run -d -p 8080:8080 -p 8443:8443 -v $(pwd):/app --name cf_golfap ortussol
 
 ### 7.5. Demonstration with multi-agentic app
 To run the app locally:
-  1. Set up a virtual environment: python3.12 -m venv venv 
+  1. Set up a virtual environment: python3.11 -m venv venv 
   2. Activate the virtual environment: source venv/bin/activate
   3. cd to the app directory: cd apps/code-translator
   4. Update .env.template as appropriate and rename to .env
@@ -284,7 +284,15 @@ To run the app locally:
   6. Install dependencies: pip install -r requirements.txt 
   7. Start the app: python3 -m streamlit run app.py
 
-### 7.6. Demonstration with Kubeflow Pipelines
+### 7.6. Demonstration with Jupyter notebook
+To run the notebook locally:
+  1. cd to the notebooks directory: cd workflows/templates/multi-agent
+  2. Set up a virtual environment: python3.11 -m venv venv
+  3. Activate the virtual environment: source venv/bin/activate
+  4. Copy .env file: cp ../../../.env .
+  5. Install dependencies: pip install -r requirements.txt 
+  6. Start the notebook: jupyter notebook
+  7. Deactivate and delete the virtual environment when done: deactivate; rm -rf venv
 
 ## 7.7. How-Tos (can convert to MCP servers)
 

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devspaces-git-config
+  labels:
+    controller.devfile.io/mount-to-devworkspace: "true"
+    controller.devfile.io/watch-configmap: "true"
+  annotations:
+    controller.devfile.io/mount-path: "/home/user/.gitconfig.d"
+data:
+  gitconfig: |
+    [user]
+      name = ${DEVSPACES_GIT_USERNAME}
+      email = ${DEVSPACES_GIT_EMAIL}

@@ -25,3 +25,6 @@ apps/pacman-game
 apps/demo/*.txt
 resources/devspaces/devspaces_secret.yaml
 resources/devspaces/devfile.yaml
+**/__pycache__/
+**/venv/
+workflows/templates/multi-agent/venv

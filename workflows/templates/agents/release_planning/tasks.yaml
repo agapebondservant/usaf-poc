@@ -1,0 +1,37 @@
+product_owner_prep:
+  description: >
+    Here is a list of glob file patterns:
+    {inputs}
+    
+    Your task is to read all the files in the directory that match these glob patterns,
+    and generate the concatenated contents of all the files as a single output fie.
+
+  expected_output: >
+    A concatenated file containing the contents of all the files in the base
+    directory matching the given glob patterns.
+  agent: product_owner
+  allow_delegation: False
+  output_file: "{concatenated_output_file}"
+
+product_owner:
+  description: >
+    Here is a file containing a list of software documents:
+    {concatenated_output_file}
+    
+    Your task is to read this file, analyze the list of documents, and 
+    generate a backlog of documentation user stories for each document. 
+    
+    {additional_context}
+    
+    Each task should include the following fields:
+    **title**: The title of the user story (e.g., "API Specifications Document Creation")
+    **body**: The body of the user story (e.g., "As a developer, I want to read
+    an OpenAPI-compatible API specification for this application so that I can have a clear 
+    understanding of the application's endpoints and request/response formats.").
+    **acceptance criteria**: The acceptance criteria for the user story.
+
+  expected_output: >
+    A backlog of documentation user stories, one per document.
+  agent: product_owner
+  allow_delegation: False
+  output_file: "{output_base_path}/backlog.txt"

@@ -1,0 +1,48 @@
+schemaVersion: 2.2.0
+metadata:
+  name: python-opencode-workspace
+
+components:
+  - name: python-tools
+    container:
+      image: registry.access.redhat.com/ubi9/python-311
+      memoryRequest: 4Gi
+      memoryLimit: 8Gi
+      cpuRequest: "2000m"
+      cpuLimit: "4000m"
+      mountSources: true
+      env:
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size=6144"
+      volumeMounts:
+        - name: workspace-storage
+          path: /projects
+
+  - name: workspace-storage
+    volume:
+      size: 10Gi
+
+projects:
+  - name: industrial-sensor-data-app
+    git:
+      remotes:
+        origin: https://github.com/${DEVSPACES_GIT_REPO}.git
+      checkoutFrom:
+        revision: ${DEVSPACES_GIT_BRANCH}
+
+commands:
+  - id: install-node
+    exec:
+      component: python-tools
+      commandLine: |
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+        dnf install -y nodejs
+      label: "Install Node.js"
+
+  - id: install-opencode
+    exec:
+      component: python-tools
+      commandLine: |
+        curl -fsSL https://opencode.ai/install | bash
+      label: "Install OpenCode"
+

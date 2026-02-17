@@ -8,15 +8,8 @@ import os
 from crewai.tools import tool
 from github import Github, GithubException
 from git import Repo
-import logging
-import traceback
-import shutil
 from typing import Any
-
-logging.basicConfig(level=logging.INFO)
-import graphql_util
-
-logging.basicConfig(level=logging.INFO)
+from tools import github_util, graphql_util
 
 _GITHUB_TOKEN = os.getenv("CODEAGENT_GITHUB_PAT")
 
@@ -24,139 +17,18 @@ _GITHUB_REPO = os.getenv("DEVSPACES_GIT_REPO")
 
 _LOCAL_PATH = "tmp"
 
-
-def _get_github_client(default_branch: str = "refactored"):
-    """Get an authenticated GitHub repo."""
-
-    logging.info(f"Repo name: {_GITHUB_REPO}")
-
-    repo = Github(_GITHUB_TOKEN).get_repo(_GITHUB_REPO)
-
-    repo.edit(default_branch="refactored")
-
-    return repo
-
-def _get_github_user():
-    """Get an authenticated GitHub user."""
-
-    logging.info(f"Repo name: {_GITHUB_REPO}")
-
-    return Github(_GITHUB_TOKEN).get_user()
-
-def _get_project_metadata(project_name):
-    """Returns metadata for this project searched by name.
-
-    Returns (project_id, status_field_id, {option_name: option_id}).
-    """
-    try:
-        owner = _get_github_user().login
-
-        try:
-            logging.debug(f"Trying project search by organization...")
-
-            query = graphql_util.get_query_string("get_nodes_and_pageinfo_by_org")
-
-            data = graphql_util.query(query, _GITHUB_TOKEN, {"owner": owner})
-
-            projects = data["organization"]["projectsV2"]["nodes"]
-
-        except Exception:
-            logging.debug(f"Failed, trying project search by user...")
-
-            query = graphql_util.get_query_string("get_nodes_and_pageinfo_by_user")
-
-            data = graphql_util.query(query, _GITHUB_TOKEN,  {"owner": owner})
-
-            projects = data["user"]["projectsV2"]["nodes"]
-
-        project_id = [p["id"] for p in projects if p["title"] == project_name][0]
-
-        logging.debug("Querying project fields for status options...")
-
-        field_query = graphql_util.get_query_string("get_project_status_field_data")
-
-        data = graphql_util.query(field_query, _GITHUB_TOKEN, {"projectId": project_id})
-
-        for field in data["node"]["fields"]["nodes"]:
-
-            if field.get("name") == "Status":
-
-                option_map = {opt["name"]: opt["id"] for opt in field["options"]}
-
-                return project_id, field["id"], option_map
-
-        raise Exception(f"No 'Status' field found in project '{project_name}'.")
-
-    except Exception as e:
-        logging.error(f"Error getting project metadata: {e}")
-
-        logging.error(traceback.format_exc())
-
-#@tool("Clone Repo")
+@tool("Clone Repo")
 def clone_repo(local_path=_LOCAL_PATH, branch="main"):
     """Clone a GitHub repo locally."""
-    logging.info(f'Cloning repo to {local_path}...')
+    github_util.clone_repo(local_path, branch)
 
-    try:
-
-        if os.path.exists(local_path):
-            logging.info(f'Repo {local_path} already exists. Removing...')
-
-            shutil.rmtree(local_path)
-
-        client = _get_github_client()
-
-        repo_url = client.clone_url
-
-        print(f"Found repository: {client.name}")
-
-        Repo.clone_from(repo_url, local_path, branch=branch)
-
-    except Exception as e:
-
-        logging.error(f'Error cloning repo to {local_path}...')
-
-        logging.error(traceback.format_exc())
-
-#@tool("Create feature branch")
+@tool("Create feature branch")
 def create_feature_branch(feature_branch: str, local_path: str=_LOCAL_PATH):
     """Creates a new feature branch from the current branch and pushes it remotely."""
-    logging.info(f"Creating feature branch {feature_branch} in {local_path}...")
-
-    try:
-
-        client = _get_github_client()
-
-        repo_url = client.clone_url.replace("https://github.com",
-                                            f"https://{_GITHUB_TOKEN}@github.com")
-
-        repo = Repo(local_path)
-
-        origin = repo.remotes.origin
-
-        origin.set_url(repo_url)
-
-        new_branch = repo.create_head(feature_branch)
-
-        new_branch.checkout()
-
-        logging.debug(f"Pushing {feature_branch} to remote...")
-
-        origin.push(refspec=f"{feature_branch}:{feature_branch}",
-                    env={"GIT_ASKPASS": "echo",
-                         "GIT_USERNAME": "x-access-token",
-                         "GIT_PASSWORD": _GITHUB_TOKEN})
-
-        print(f"Feature branch {feature_branch} created and pushed successfully.")
-
-    except Exception as e:
-
-        logging.error(f'Error creating feature branch {feature_branch} in {local_path}...')
-
-        logging.error(traceback.format_exc())
+    github_util.create_feature_branch(feature_branch, local_path)
 
 
-#@tool("Create GitHub Issue")
+@tool("Create GitHub Issue")
 def create_issue(title: str, body: str = "",
                  project: str = "Release 1") -> int:
     """Create a new GitHub issue and add it to the "Backlog" status of the given project.
@@ -171,173 +43,39 @@ def create_issue(title: str, body: str = "",
     Returns:
         The generated issue number.
     """
-    try:
-        client = _get_github_client()
-
-        issue = client.create_issue(title=title, body=body)
-
-        logging.info(f"Issue #{issue.number} created: {issue.html_url}. "
-                     f"Adding issue to project {project}...")
-
-        project_id, status_field_id, status_options = _get_project_metadata(project)
-
-        if "Backlog" not in status_options:
-
-            raise Exception(f"Project '{project}' must have a 'Backlog' status option.")
-
-        logging.info(f"Adding issue to project '{project}'...")
-
-        add_issue_mutation = graphql_util.get_query_string("add_project_issue_mutation")
-
-        data = graphql_util.query(add_issue_mutation, _GITHUB_TOKEN,{
-            "projectId": project_id,
-            "contentId": issue.node_id,
-        })
-
-        item_id = data["addProjectV2ItemById"]["item"]["id"]
-
-        logging.info(f"Setting issue status to 'Backlog'...")
-
-        status_mutation = graphql_util.get_query_string("update_project_status_mutation")
-
-        graphql_util.query(status_mutation, _GITHUB_TOKEN,{
-            "projectId": project_id,
-            "itemId": item_id,
-            "fieldId": status_field_id,
-            "optionId": status_options["Backlog"],
-        })
-
-        logging.info(f"Successfully added issue #{issue.number} to project "
-                     f"'{project}' with status 'Backlog'")
-
-        return issue.number
-    except Exception as e:
-        logging.error(f"Error creating issue in project {project}: {e}")
-
-        logging.error(traceback.format_exc())
+    return github_util.create_issue(title, body, project=project)
 
 
-#@tool("Get Top Issue In Status")
+@tool("Get Top Issue In Status")
 def get_top_issue_in_status(status_name: str, project: str = "Release 1") -> Any:
     """Get the first issue with the given status in a ProjectV2, or None if
     no issues have that status.
 
     Returns a dict with 'item_id', 'issue_number', and 'issue_title', or None.
     """
-    try:
-        project_id, status_field_id, status_options = _get_project_metadata(project)
-
-        if status_name not in status_options:
-            raise Exception(f"Status '{status_name}' not found in project '{project}'.")
-
-        query = graphql_util.get_query_string("nodes_with_issue_content")
-
-        data = graphql_util.query(query, _GITHUB_TOKEN, {"projectId": project_id})
-
-        for item in data["node"]["items"]["nodes"]:
-
-            content = item.get("content")
-
-            if not content or "number" not in content:
-                continue
-
-            for fv in item["fieldValues"]["nodes"]:
-                if (fv.get("field", {}).get("id") == status_field_id
-                        and fv.get("name") == status_name):
-
-                    logging.info(f"Returning issue #{content['number']} with "
-                                 f"status '{status_name}'")
-                    return {
-                        "item_id": item["id"],
-                        "issue_number": content["number"],
-                        "issue_title": content["title"],
-                    }
-        return None
-
-    except Exception as e:
-
-        logging.error(f"Error getting top issue with status '{status_name}': {e}")
-
-        logging.error(traceback.format_exc())
+    github_util.get_top_issue_in_status(status_name, project)
 
 
-#@tool("Move Top Issue To New Status")
+@tool("Move Top Issue To New Status")
 def move_top_issue_to_status(old_status: str, new_status: str,
                              project: str = "Release 1"):
     """Move the top issue from one status to another in the given project."""
-    try:
-        logging.info(f"Moving top issue from '{old_status}' to '{new_status}'...")
+    github_util.move_top_issue_to_status(old_status, new_status, project)
 
-        project_id, status_field_id, status_options = _get_project_metadata(project)
-
-        if new_status not in status_options:
-            raise Exception(f"Status '{new_status}' not found in project '{project}'.")
-
-        item = get_top_issue_in_status(old_status, project)
-        if not item:
-            raise Exception(f"No issues found with status '{old_status}'.")
-
-        mutation = graphql_util.get_query_string("update_project_status_mutation")
-
-        logging.info(f"Updating issue status to '{new_status}'...")
-
-        graphql_util.query(mutation, _GITHUB_TOKEN, {
-            "projectId": project_id,
-            "itemId": item["item_id"],
-            "fieldId": status_field_id,
-            "optionId": status_options[new_status],
-        })
-
-        logging.info(f"Successfully moved issue #{item['issue_number']} from "
-                     f"'{old_status}' to '{new_status}'")
-    except Exception as e:
-        logging.error(f"Error moving issue to status '{new_status}': {e}")
-        logging.error(traceback.format_exc())
+@tool("Check if Project is Empty")
+def is_project_empty(project: str = "Release 1") -> bool:
+    """Check whether a Kanban project board has no issues."""
+    github_util.is_project_empty(project)
 
 
-#@tool("Create Pull Request For Issue")
+@tool("Create Pull Request For Issue")
 def create_pull_request_for_issue(title: str, head: str, issue_number: int,
                                   local_path: str = _LOCAL_PATH, base: str = "main",
                                   body: str = ""):
-    """Create a new pull request for the given issue and link it to the PR body.
-
-    Args:
-        title: The PR title.
-        head: The branch containing changes (head branch).
-        issue_number: The issue number to link to the PR.
-        local_path: The path to the local repo.
-        base: The branch to merge into (base branch). Defaults to 'main'.
-        body: The PR body/description.
-    """
-    try:
-        client = _get_github_client()
-
-        repo = Repo(local_path)
-
-        origin = repo.remotes.origin
-
-        repo.git.add(A=True)
-
-        repo.index.commit("Updates")
-
-        origin.push(refspec=f"{head}:{head}")
-
-        pr = client.create_pull(title=title,
-                                body=f"{body}\ncloses #{issue_number}",
-                                head=head,
-                                base=base)
-
-        logging.info(f"PR #{pr.number} created: {pr.html_url}")
-
-        return pr.number
-
-    except Exception as e:
-        logging.error(f"Error creating PR: {e}")
-
-        logging.error(traceback.print_exc())
+    github_util.create_pull_request_for_issue(title, head, issue_number, local_path, base, body)
 
 
-#@tool("Merge Pull Request")
+@tool("Merge Pull Request")
 def merge_pull_request(pr_number: int,
                        head: str,
                        base: str = "main",
@@ -357,23 +95,4 @@ def merge_pull_request(pr_number: int,
         local_path: The path to the local repo. Defaults to tmp.
         merge_method: Merge method - 'merge', 'squash', or 'rebase'.
     """
-    try:
-
-        repo = Repo(local_path)
-
-        origin = repo.remotes.origin
-
-        repo.git.checkout(base)
-
-        origin.pull()
-
-        repo.git.merge(head, strategy_option="ours")
-
-        origin.push(refspec=f"{base}:{base}", force=True)
-
-        logging.info(f"PR #{pr_number} merged successfully via {merge_method}.")
-
-    except Exception as e:
-        logging.error(f"Error merging PR: {e}")
-
-        logging.error(traceback.format_exc())
+    github_util.merge_pull_request(pr_number, head, base, local_path, merge_method)
