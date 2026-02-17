@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class UserStory(BaseModel):
     title: str
@@ -6,4 +7,4 @@ class UserStory(BaseModel):
     acceptance_criteria: str
 
 class UserStoryList(BaseModel):
-    issues: list[UserStory]
+    issues: List[UserStory]

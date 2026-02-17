@@ -28,9 +28,11 @@ def get_selected_model(model_prefix: str):
 
         api_key=os.getenv(f'{model_prefix}_LLM_TOKEN'),
 
-        base_url=os.getenv(f'{model_prefix}_LLM_URL'),
+        base_url=os.getenv(f'{model_prefix}_LLM_API_BASE'),
 
         max_tokens=128_000,
+
+        temperature=0,
     )
 
     return llm
@@ -67,7 +69,8 @@ class ReleaseCycle():
             config=self.agents_config["product_owner"],
             llm=get_selected_model(self.selected_model),
             tools=[file_tools.read_files_by_pattern,
-                   file_tools.read_file_by_name]
+                   file_tools.read_file_by_name],
+            result_as_answer=True,
         )
 
     @task

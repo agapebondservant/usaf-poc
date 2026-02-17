@@ -28,3 +28,4 @@ resources/devspaces/devfile.yaml
 **/__pycache__/
 **/venv/
 workflows/templates/multi-agent/venv
+**/tmp/

@@ -1,7 +1,7 @@
 product_owner_prep:
   description: >
     Here is a list of glob file patterns:
-    {inputs}
+    {input}
     
     Your task is to read all the files in the directory that match these glob patterns,
     and generate the concatenated contents of all the files as a single output fie.
@@ -15,10 +15,10 @@ product_owner_prep:
 
 product_owner:
   description: >
-    Here is a file containing a list of software documents:
+    Here is a file containing software documents:
     {concatenated_output_file}
     
-    Your task is to read this file, analyze the list of documents, and 
+    Your task is to read this file, analyze the documents, and 
     generate a backlog of documentation user stories for each document. 
     
     {additional_context}
