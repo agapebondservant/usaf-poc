@@ -7,4 +7,4 @@ class UserStory(BaseModel):
     acceptance_criteria: str
 
 class UserStoryList(BaseModel):
-    issues: List[UserStory]
+    stories: List[UserStory]
