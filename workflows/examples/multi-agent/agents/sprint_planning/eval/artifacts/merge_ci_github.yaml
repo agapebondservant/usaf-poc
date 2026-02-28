@@ -1,0 +1,105 @@
+name: Unit Test CI
+  on:
+    pull_request:
+      types: [opened, synchronize, reopened]
+  jobs:
+    run-tests:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: write
+        pull-requests: write
+
+      steps:
+        - name: Checkout PR branch
+          uses: actions/checkout@v4
+          with:
+            ref: ${{ github.event.pull_request.head.sha }}
+            fetch-depth: 0
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+
+        - name: Install dependencies
+          run: |
+            pip install pytest pytest-json-report
+            if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+        - name: Run tests
+          id: run_tests
+          env:
+            TEST_DIR: 'spec/tests'
+          run: |
+            pytest "$TEST_DIR" \
+              --json-report \
+              --json-report-file=report.json \
+              --tb=short \
+              -q || true
+
+        - name: Calculate pass rate
+          id: stats
+          run: |
+            python3 - <<'EOF'
+            import json, os, sys
+
+            try:
+                with open("report.json") as f:
+                    report = json.load(f)
+            except FileNotFoundError:
+                print("ERROR: report.json not found — pytest may not have run.")
+                sys.exit(1)
+
+            summary = report.get("summary", {})
+            passed  = summary.get("passed",  0)
+            failed  = summary.get("failed",  0)
+            error   = summary.get("error",   0)
+            total   = summary.get("total",   0)
+
+            pass_rate = (passed / total * 100) if total > 0 else 0.0
+            meets    = pass_rate >= 90.0
+
+            print(f"Results: {passed} passed, {failed} failed, {error} errors / {total} total")
+            print(f"Pass rate: {pass_rate:.1f}%  ({'✅ PASS' if meets else '❌ FAIL'})")
+
+            out = os.environ["GITHUB_OUTPUT"]
+            with open(out, "a") as f:
+                f.write(f"pass_rate={pass_rate:.2f}\n")
+                f.write(f"passed={passed}\n")
+                f.write(f"failed={failed}\n")
+                f.write(f"total={total}\n")
+                f.write(f"meets_threshold={'true' if meets else 'false'}\n")
+            EOF
+
+        - name: Merge PR (pass rate ≥ 90%)
+          if: steps.stats.outputs.meets_threshold == 'true'
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            echo "✅ Pass rate ${{ steps.stats.outputs.pass_rate }}% — merging PR #${{
+  github.event.pull_request.number }}..."
+            gh pr merge "${{ github.event.pull_request.number }}" \
+              --squash \
+              --repo "${{ github.repository }}" \
+              --subject "Auto-merge: ${{ github.event.pull_request.title }}" \
+              --body "Merged automatically — test pass rate: ${{ steps.stats.outputs.pass_rate }}% (${{
+  steps.stats.outputs.passed }}/${{ steps.stats.outputs.total }})"
+
+        - name: Request changes (pass rate < 90%)
+          if: steps.stats.outputs.meets_threshold == 'false'
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            gh pr review "${{ github.event.pull_request.number }}" \
+              --request-changes \
+              --body "❌ **Test pass rate ${{ steps.stats.outputs.pass_rate }}% is below the required 90%
+  threshold.**
+
+            | Metric  | Count |
+            |---------|-------|
+            | Passed  | ${{ steps.stats.outputs.passed }} |
+            | Failed  | ${{ steps.stats.outputs.failed }} |
+            | Total   | ${{ steps.stats.outputs.total }} |
+
+            Please fix the failing tests before this PR can be merged." \
+              --repo "${{ github.repository }}"

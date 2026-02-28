@@ -92,6 +92,16 @@ def _get_project_metadata(project_name):
 
         logging.error(traceback.format_exc())
 
+def get_issue_by_number(issue_number: int, project: str = "Release 1") -> Any:
+    """Get an issue by its number in a ProjectV2. Returns None if not found."""
+    try:
+        client = _get_github_client()
+
+        return client.get_issue(issue_number)._rawData
+
+    except Exception as e:
+        logging.error(f"Error getting issue #{issue_number}: {e}")
+
 def clone_repo(local_path=_LOCAL_PATH, branch="main"):
     """Clone a GitHub repo locally."""
     logging.info(f'Cloning repo to {local_path}...')
@@ -254,7 +264,6 @@ def get_top_issue_in_status(status_name: str, project: str = "Release 1") -> Any
 
         logging.error(traceback.format_exc())
 
-
 def move_top_issue_to_status(old_status: str, new_status: str,
                              project: str = "Release 1"):
     """Move the top issue from one status to another in the given project."""
@@ -322,7 +331,7 @@ def is_sprint_blocked(project: str = "Release 1") -> bool:
 
     Returns True if:
       - Any issue has status "Blocked"
-      - No issues have status "Ready" or "Backlog"
+      - No issues has status "Backlog"
 
     Returns False otherwise.
     """
@@ -337,7 +346,7 @@ def is_sprint_blocked(project: str = "Release 1") -> bool:
 
         items = data["node"]["items"]["nodes"]
 
-        has_ready_or_backlog = False
+        has_backlog = False
 
         for item in items:
 
@@ -356,11 +365,11 @@ def is_sprint_blocked(project: str = "Release 1") -> bool:
                     logging.info(f"Issue #{content['number']} is Blocked.")
                     return True
 
-                if status in ("Ready", "Backlog"):
-                    has_ready_or_backlog = True
+                if status in ("Backlog"):
+                    has_backlog = True
 
-        if not has_ready_or_backlog:
-            logging.info(f"No issues with status 'Ready' or 'Backlog' in "
+        if not has_backlog:
+            logging.info(f"No issues with status 'Backlog' in "
                          f"project '{project}'.")
             return True
 
@@ -376,7 +385,7 @@ def is_sprint_in_progress(project: str = "Release 1") -> bool:
     """Check whether a sprint is currently in progress.
 
     Returns True if exactly 1 issue has a status not in
-    ("Ready", "Backlog", "Done").
+    ("Backlog", "Done").
 
     Returns False otherwise.
     """
@@ -404,7 +413,7 @@ def is_sprint_in_progress(project: str = "Release 1") -> bool:
                 if fv.get("field", {}).get("id") != status_field_id:
                     continue
 
-                if fv.get("name") not in ("Ready", "Backlog", "Done"):
+                if fv.get("name") not in ("Backlog", "Done"):
                     active_count += 1
 
         logging.info(f"Project '{project}' has {active_count} active issue(s).")
@@ -497,66 +506,3 @@ def merge_pull_request(pr_number: int,
         logging.error(f"Error merging PR: {e}")
 
         logging.error(traceback.format_exc())
-
-def sprint_kickoff_metadata(backlog_file: str,
-                            sprint_description_file: str,
-                            project: str = "Release 1",) -> Any:
-    """
-    Retrieves relevant metadata for the sprint backlog to be processed
-    by the workflow.
-    """
-
-    try:
-
-        sprint_started = not is_project_empty(project)
-
-        if not sprint_started:
-
-            with open(sprint_description_file, "r") as f:
-
-                user_story_data = _YAML.safe_load(sprint_description_file)
-
-                sprint_description = f.read()
-
-                return {"title": "Sprint Kickoff", "description": sprint_description}
-
-        else:
-
-            with open(backlog_file, "r") as f:
-
-                backlog_issue_data = f.readlines()
-
-                for line in backlog_issue_data:
-
-                    create_issue(title=line.strip(), project=project)
-
-            next_ready_issue = get_top_issue_in_status("Ready", project)
-
-            next_backlog_issue = get_top_issue_in_status("Backlog", project)
-
-            next_blocked_issue = get_top_issue_in_status("Blocked", project)
-
-            return {"title": next_ready_issue["issue_title"], "description": next_ready_issue["issue_number"]}
-
-    except Exception as e:
-
-        logging.error("Error while kicking off sprint: {}".format(e))
-
-        logging.error(traceback.format_exc())
-
-
-
-
-
-        return get_top_issue_in_status("Backlog", project)["issue_number"] if get_top_issue_in_status("Backlog", project) else create_issue(
-            title=f"Issue #{retrieve_next_issue_netadata(project) + 1}",
-            project=project,
-        )
-
-    except Exception as e:
-
-        logging.error(f"Error retrieving next issue: {e}")
-
-        logging.error(traceback.format_exc())
-
-        return -1

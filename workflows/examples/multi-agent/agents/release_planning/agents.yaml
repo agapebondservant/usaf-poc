@@ -11,3 +11,5 @@ product_owner:
     developers can easily break into tasks. You are proactive about 
     identifying edge cases and technical constraints early.
   max_iter: 2
+  reasoning: True
+  max_reasoning_attempts: 2

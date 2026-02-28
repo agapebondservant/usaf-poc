@@ -1,0 +1,93 @@
+plan:
+  description: >
+    Here is a user story describing a document to be written:
+    {input}
+    
+    Your task is to come up with a summary of useful document details that can
+    be used to write the document. The document details should include the 
+    following:
+    
+    **File Name**: An appropriate file name for the document, ex. "api_specifications.md".
+    **Document Type**: The type of document to be written, ex. "API Specifications".
+    **Reference File Locations**: A comma-delimited list of the locations of
+    the files that can be used to derive the document content, ex. 
+    "/api/openapi.yaml, README.md". Only consider locations that exist
+    under the ./{output_base_path} folder. Do not include locations that do 
+    not exist in this folder.
+
+  expected_output: >
+    A summary of useful document details, specifically including the file 
+    name, document type, and reference file locations.
+  agent: sprint_planner
+  allow_delegation: False
+
+pre_build:
+  description: >
+    Here are files containing a portion of relevant information for the 
+    document:
+    {{plan.reference_file_locations}}
+    
+    Your task is to read the content of these files and concatenate the 
+    content into a single output. Limit the total number of files to 5.
+
+  expected_output: >
+    A concatenation of the files provided in the
+    {{plan.reference_file_locations}} file.
+  agent: tech_writer
+  allow_delegation: False
+  context:
+    - plan
+
+build:
+  description: >
+    Here is the content of files that are relevant to the 
+    {{plan.document_type}} document:
+    
+    {{pre_build.output}}
+    
+    Your task is to use this context to write a 
+    comprehensive yet concise {{plan.document_type}}. 
+    
+    Use the FileWriterTool to save the revised content to a file named 
+    {output_base_path}/spec/{{plan.file_name}}.orig.
+    
+    The document should follow the style and structure of an 
+    industry-standard software development document.
+    Use Markdown format for the document.
+
+  expected_output: >
+    A concise {{plan.document_type}} file saved to 
+    {output_base_path}/spec/{{plan.file_name}}.orig.
+  agent: tech_writer
+  allow_delegation: False
+  context:
+    - plan
+    - pre_build
+
+reflect:
+  description: >
+    Here is the current version of the {{plan.document_type}} file:
+    
+    {output_base_path}/spec/{{plan.file_name}}.orig
+    
+    Your task is to review the content of the file above and rewrite it using 
+    these guidelines: 
+    
+    Guidelines
+    -----------
+    {input}
+    
+    Use the FileWriterTool to save the revised content to a file named 
+    {output_base_path}/spec/{{plan.file_name}}.
+    
+    The document should follow the style and structure of an 
+    industry-standard software development document.
+    Use Markdown format for the document.
+    Try not to stray from the guidelines.
+
+  expected_output: >
+    A concise {{plan.document_type}} file saved to {output_base_path}/spec/{{plan.file_name}}.
+  agent: tech_writer
+  allow_delegation: False
+  context:
+    - plan

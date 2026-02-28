@@ -1,0 +1,8 @@
+coder:
+  description: >
+    Provide a summary of the code in this repository, then translate it to Python 3.11.
+  expected_output: >
+    A dump of the translated code, including directory structure.
+  agent: coder
+  allow_delegation: False
+  output_file: "{output_base_path}/code.md"
