@@ -170,6 +170,63 @@ python3 -m vllm.entrypoints.api_server \
     --dtype=auto \
     --gpu-memory-utilization 0.9 \
     --max-model-len=128000 \
+
+```
+
+### 1.5.6 Deploying mistralai/ministral-14b-2512
+Use the following settings as guidance:
+```
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+pip install git+https://github.com/huggingface/transformers 
+pip install vllm==0.12.0 mistral-common==1.9.1 tqdm==4.49.0 jupyter==1.1.1
+nohup python3 -m vllm.entrypoints.openai.api_server \
+    --model mistralai/Ministral-3-14B-Instruct-2512 \
+    --tokenizer_mode mistral \
+    --config_format mistral \
+    --load_format mistral \
+    --dtype=auto \
+    --max-model-len=256000 \
+    > vllm.log 2>&1 &
+```
+
+### 1.5.7 Deploying microsoft/phi4
+Use the following settings as guidance:
+```
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+pip install git+https://github.com/huggingface/transformers 
+pip install vllm==0.12.0 mistral-common==1.9.1 tqdm==4.49.0 jupyter==1.1.1 hf-transfer==0.1.9
+nohup python3 -m vllm.entrypoints.openai.api_server \
+    --model microsoft/Phi-4-mini-instruct \
+    --trust-remote-code \
+    --dtype auto \
+    --max-model-len 131072 \
+    --enable-auto-tool-choice \
+    --tool-call-parser hermes \
+    > vllm.log 2>&1 &
+```
+
+### 1.5.8 Deploying nemotron/
+Use the following settings as guidelines:
+```
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+export VLLM_USE_FLASHINFER_MOE_FP4=1
+export VLLM_FLASHINFER_MOE_BACKEND=throughput
+wget https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4/resolve/main/nano_v3_reasoning_parser.py
+nohup python3 -m vllm.entrypoints.openai.api_server \
+  --model nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4 \
+  --max-num-seqs 8 \
+  --tensor-parallel-size 1 \
+  --max-model-len 262144 \
+  --port 8000 \
+  --trust-remote-code \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_coder \
+  --reasoning-parser-plugin nano_v3_reasoning_parser.py \
+  --reasoning-parser nano_v3 \
+  --kv-cache-dtype fp8 \
+  > vllm.log 2>&1 &
+
+
 ```
 
 ### 1.6. Deploying gpt-oss (or accessing via third party provider)

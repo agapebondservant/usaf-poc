@@ -14,7 +14,7 @@ product_owner_user_stories:
     an OpenAPI-compatible API specification for this application so that I can have a clear 
     understanding of the application's endpoints and request/response formats.").
     **acceptance criteria**: The detailed acceptance criteria for the user 
-    story.
+    story written as a Markdown To-do list.
 
   expected_output: >
     A backlog of documentation user stories, one per document.

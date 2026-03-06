@@ -11,6 +11,7 @@ import traceback
 from openai import OpenAI
 from deepeval.models.base_model import DeepEvalBaseLLM
 from deepeval import assert_test, evaluate
+from deepeval.evaluate import AsyncConfig
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 from deepeval.metrics import GEval, AnswerRelevancyMetric
 from evaluate import load
@@ -23,6 +24,7 @@ import matplotlib.pyplot as plt
 import logging
 logging.basicConfig(level=logging.INFO)
 from data_models.data_models import EvalDetails
+import asyncio
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -199,9 +201,11 @@ def compute_reference_free_eval_scores(test_data_file_path: str,
 
         metrics = [AnswerRelevancyMetric(threshold=threshold,
                                          model=evaluatorLlm,
-                                         verbose_mode=False)]
+                                         verbose_mode=False,
+                                         async_mode=False)]
 
-        results = evaluate(test_cases=test_cases, metrics=metrics)
+        results = evaluate(test_cases=test_cases, metrics=metrics,
+                           async_config=AsyncConfig(run_async=False))
 
         result_scores_relevancy = [metric.score for result in results.test_results for metric in result.metrics_data if metric.name=="Answer Relevancy"]
 

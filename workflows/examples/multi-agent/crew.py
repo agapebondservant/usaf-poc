@@ -3,14 +3,16 @@
 ##############################################################################
 
 from crewai import Agent, Task, Crew, Process, LLM
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, task, before_kickoff
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
-from crewai_tools import SerperDevTool, DirectoryReadTool, FileWriterTool, FileReadTool
+from crewai_tools import (SerperDevTool, DirectoryReadTool, FileWriterTool,
+                          FileReadTool)
 from crewai.tools import tool
 import os
 from tools import github_util, file_tools, evaluation_tools
-from data_models.data_models import UserStory, UserStoryList, DocDetails, EvalDetails
+from data_models.data_models import (UserStory, UserStoryList, DocDetails,
+                                     EvalDetails, AggregateDetails)
 import inspect
 from pydantic import BaseModel
 import logging
@@ -32,9 +34,12 @@ def get_selected_model(model_prefix: str):
 
         base_url=os.getenv(f'{model_prefix}_LLM_API_BASE'),
 
-        max_tokens=128_000,
+        max_tokens=256_000,
 
         temperature=0,
+
+        extra_params={"reasoning_effort": "low"},
+
     )
 
     return llm
@@ -54,9 +59,9 @@ class ReleaseCycle():
 
     tasks: List[Task]
 
-    agents_config = "multi-agent/agents/release_planning/agents.yaml"
+    agents_config = "agents/release_planning/agents.yaml"
 
-    tasks_config = "multi-agent/agents/release_planning/tasks.yaml"
+    tasks_config = "agents/release_planning/tasks.yaml"
 
     @agent
     def product_owner(self) -> Agent:
@@ -108,11 +113,14 @@ class SprintCycle:
     """
 
     def __init__(self, feature: str, selected_model: str, category: str):
+        logging.info(f"################################"
+        f"✅ Initializing new sprint: category={category}"
+        f"################################")
         self.selected_model = selected_model
         self.feature = feature
         self.category = category
-        self.agents_config = f"multi-agent/agents/sprint_planning/agents.yaml"
-        self.tasks_config = (f"multi-agent/agents/sprint_planning/{category}/tasks.yaml")
+        self.original_agents_config_path = f"agents/sprint_planning/agents.yaml"
+        self.original_tasks_config_path = f"agents/sprint_planning/{category}/tasks.yaml"
         self.data_type = self.resolve_class(category)
 
     def resolve_class(self, category: str) -> type[BaseModel]:
@@ -125,19 +133,11 @@ class SprintCycle:
 
         return cls
 
-    agents: List[BaseAgent]
-
-    tasks: List[Task]
-
-    agents_config: str
-
-    tasks_config: str
-
     selected_model: str
 
     category: str
 
-    file_writer_tool = FileWriterTool(overwrite=False, create_dir=True)
+    file_writer_tool = FileWriterTool(create_dir=True)
 
     file_reader_tool = FileReadTool()
 
@@ -155,8 +155,9 @@ class SprintCycle:
             llm=get_selected_model(self.selected_model),
             tools=[file_tools.read_files_by_pattern,
                    file_tools.read_file_by_name,
+                   file_tools.query_json_string,
                    self.file_writer_tool,
-                   self.file_reader_tool],
+                   self.file_reader_tool,],
             result_as_answer=True,
         )
 
@@ -170,8 +171,9 @@ class SprintCycle:
             llm=get_selected_model(self.selected_model),
             tools=[file_tools.read_files_by_pattern,
                    file_tools.read_file_by_name,
+                   file_tools.query_json_string,
                    self.file_writer_tool,
-                   self.file_reader_tool],
+                   self.file_reader_tool,],
             result_as_answer=True,
         )
 
@@ -192,37 +194,13 @@ class SprintCycle:
             config=self.agents_config["reviewer"],
             llm=get_selected_model(self.selected_model),
             tools=[file_tools.read_file_by_name,
+                   file_tools.query_json_string,
                    self.file_writer_tool,
                    self.file_reader_tool,
                    evaluation_tools.get_llm_as_judge_evaluation_scores],
             verbose=True
         )
 
-    @task
-    def plan(self) -> Task:
-        return Task(
-            config=self.tasks_config["plan"],
-            output_pydantic=self.data_type,
-        )
-
-    @task
-    def pre_build(self) -> Task:
-        return Task(
-            config=self.tasks_config["pre-build"],
-        )
-
-    @task
-    def build(self) -> Task:
-        return Task(
-            config=self.tasks_config["build"],
-        )
-
-    @task
-    def reflect(self) -> Task:
-        return Task(
-            config=self.tasks_config["reflect"],
-        )
-    #
     # @agent
     # def release_engineer(self) -> Agent:
     #     """
@@ -236,31 +214,39 @@ class SprintCycle:
     #         config=self.agents_config["release_engineer"],
     #         llm=get_selected_model(self.selected_model),
     #     )
-    #
-    # @task
-    # def release_engineer_task(self) -> Task:
-    #     return Task(
-    #         config=self.tasks_config["release_engineer"],
-    #     )
-    #
-    # @agent
-    # def release_delivery(self) -> Agent:
-    #     """
-    #     Involves the delivery of the code and the documentation to the
-    #     product owner for review and approval.
-    #     Mainly owned by the Tech Lead.
-    #     """
-    #     return Agent(
-    #         config=self.agents_config["tech_lead"],
-    #         llm=get_selected_model(self.selected_model),
-    #     )
-    #
-    # @task
-    # def release_delivery_task(self) -> Task:
-    #     return Task(
-    #         config=self.tasks_config["tech_lead"],
-    #     )
-    #
+
+    @task
+    def plan(self) -> Task:
+        return Task(
+            config=self.tasks_config["plan"],
+            output_pydantic=self.data_type,
+        )
+
+    @task
+    def pre_build(self) -> Task:
+        return Task(
+            config=self.tasks_config["pre_build"],
+        )
+
+    @task
+    def build(self) -> Task:
+        return Task(
+            config=self.tasks_config["build"],
+        )
+
+    @task
+    def reflect(self) -> Task:
+        return Task(
+            config=self.tasks_config["reflect"],
+        )
+
+    @task
+    def post_build(self) -> Task:
+        return Task(
+            config=self.tasks_config["post_build"],
+            output_pydantic=AggregateDetails,
+        )
+
     @crew
     def crew(self) -> Crew:
         """Creates the PlanningCycle crew"""

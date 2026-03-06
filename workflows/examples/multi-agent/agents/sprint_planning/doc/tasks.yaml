@@ -7,11 +7,12 @@ plan:
     be used to write the document. The document details should include the 
     following:
     
-    **File Name**: An appropriate file name for the document, ex. "api_specifications.md".
+    **File Name**: An appropriate file name for the document, ex. 
+    "api_specifications.md". The file name should reflect the document type.
     **Document Type**: The type of document to be written, ex. "API Specifications".
-    **Reference File Locations**: A comma-delimited list of the locations of
-    the files that can be used to derive the document content, ex. 
-    "/api/openapi.yaml, README.md". Only consider locations that exist
+    **Reference File Locations**: A comma-delimited collection of the 
+    locations of the files that can be used to derive the document content, 
+    ex. "/api/openapi.yaml, README.md". Only consider locations that exist
     under the ./{output_base_path} folder. Do not include locations that do 
     not exist in this folder.
 
@@ -54,6 +55,8 @@ build:
     The document should follow the style and structure of an 
     industry-standard software development document.
     Use Markdown format for the document.
+    
+    Make sure to save the content to {output_base_path}/spec/{{plan.file_name}}.orig.
 
   expected_output: >
     A concise {{plan.document_type}} file saved to 
@@ -84,10 +87,39 @@ reflect:
     industry-standard software development document.
     Use Markdown format for the document.
     Try not to stray from the guidelines.
+    Make sure to save the content to {output_base_path}/spec/{{plan.file_name}}.
 
   expected_output: >
-    A concise {{plan.document_type}} file saved to {output_base_path}/spec/{{plan.file_name}}.
+    The full revised content of the {{plan.document_type}} file (saved to 
+    {output_base_path}/spec/{{plan.file_name}}).
   agent: tech_writer
   allow_delegation: False
   context:
     - plan
+
+post_build:
+  description: >
+    Your task is to generate AggregateDetail content and save it to a file 
+    named {output_base_path}/spec/output.txt. Generate a structured output
+    that adheres to the following nested structure:
+    **AggregateDetail**:
+      **DocDetail**:
+        **File Name**: {{plan.file_name}}
+        **Document Type**: {{plan.document_type}}
+        **Reference File Locations**: {{plan.reference_file_locations}}
+        **Result Content**: {{reflect.output}}
+    
+    The Result Content field should contain the full content of the document 
+    saved at {output_base_path}/spec/{{plan.file_name}}.
+    
+    Use the FileWriterTool to save the AggregateDetail content to a file named 
+    {output_base_path}/spec/output.txt.
+
+  expected_output: >
+    AggregateDetail content saved to {output_base_path}/spec/output.txt.
+  agent: tech_writer
+  allow_delegation: False
+  context:
+    - plan
+    - reflect
+  output_file: "{output_base_path}/spec/output.txt"

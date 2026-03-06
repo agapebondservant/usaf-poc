@@ -1,10 +1,43 @@
 """File utilities for safely reading files by pattern."""
 
 from crewai.tools import tool
+from crewai_tools import FileReadTool
 from pathlib import Path
 import logging
+import json
+import jsonpath_ng.ext as jsonpath
 
 logging.basicConfig(level=logging.INFO)
+
+
+@tool("Query JSON String")
+def query_json_string(json_string: str, json_path: str) -> str:
+    """Extract data from a JSON string using a JSONPath expression.
+
+    Args:
+        json_string: A valid JSON string to query.
+        json_path: A JSONPath expression (e.g. "$.doc_detail.file_name",
+                   "$.doc_detail.result_content").
+
+    Returns:
+        The matched value(s) as a string, or an empty string if not found.
+    """
+    try:
+        data = json.loads(json_string)
+
+        expr = jsonpath.parse(json_path)
+
+        matches = [match.value for match in expr.find(data)]
+
+        if not matches:
+
+            raise Exception(f"No matches found for '{json_path}' in '{json_string}'.")
+
+        return str(matches[0]) if len(matches) == 1 else str(matches)
+
+    except Exception as e:
+        logging.error(f"Error parsing '{json_path}' from {json_string}: {e}")
+        return ""
 
 
 @tool("Read Files By Pattern")
@@ -67,16 +100,17 @@ def read_files_by_pattern(directory: str, pattern: str,
 
 
 @tool("Read File By Name")
-def read_file_by_name(file_name: str, base_dir: str = ".") -> str:
+def read_file_by_name(file_name: str) -> str:
     """Read a single file by name within a safe base directory.
 
     Args:
-        file_name: The file path to read (relative to base_dir).
-        base_dir: The root directory to restrict access to.
+        file_name: The file path to read (relative to base_dir ".").
 
     Returns:
         The contents of the file, or an empty string on error.
     """
+    base_dir = "."
+
     base = Path(base_dir).resolve()
 
     file_path = (base / file_name).resolve()
